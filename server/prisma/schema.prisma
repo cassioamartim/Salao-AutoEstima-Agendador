@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id              Int          @id @default(autoincrement())
+  uuid            String       @unique @default(uuid())
+  name            String
+  email           String       @unique
+  confirmed_email Boolean      @default(false)
+  phone           String?
+  password        String
+  schedulings     Scheduling[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@map("clients")
+}
+
+model Scheduling {
+  id          Int              @id @default(autoincrement())
+  uuid        String           @unique @default(uuid())
+  client      Client           @relation(fields: [clientUuid], references: [uuid])
+  clientUuid  String
+  service     Service          @relation(fields: [serviceUuid], references: [uuid])
+  serviceUuid String
+  date        DateTime
+  status      SchedulingStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([clientUuid, date])
+  @@map("schedulings")
+}
+
+model Service {
+  id          Int          @id @default(autoincrement())
+  uuid        String       @unique @default(uuid())
+  name        String
+  description String
+  base_price  Decimal      @db.Decimal(10, 2)
+  ref_images  Json
+  schedulings Scheduling[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("services")
+}
+
+enum SchedulingStatus {
+  PENDING
+  APPROVED
+  CANCELLED
+  DONE
+}
