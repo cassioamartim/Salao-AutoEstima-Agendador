@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Client {
+model User {
   id              Int          @id @default(autoincrement())
   uuid            String       @unique @default(uuid())
   name            String
@@ -15,18 +15,19 @@ model Client {
   confirmed_email Boolean      @default(false)
   phone           String?
   password        String
+  role            UserRole     @default(CLIENT)
   schedulings     Scheduling[]
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
-  @@map("clients")
+  @@map("users")
 }
 
 model Scheduling {
   id          Int              @id @default(autoincrement())
   uuid        String           @unique @default(uuid())
-  client      Client           @relation(fields: [clientUuid], references: [uuid])
-  clientUuid  String
+  user        User             @relation(fields: [userUuid], references: [uuid])
+  userUuid    String
   service     Service          @relation(fields: [serviceUuid], references: [uuid])
   serviceUuid String
   date        DateTime
@@ -34,14 +35,14 @@ model Scheduling {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
-  @@unique([clientUuid, date])
+  @@unique([userUuid, date])
   @@map("schedulings")
 }
 
 model Service {
   id          Int          @id @default(autoincrement())
   uuid        String       @unique @default(uuid())
-  name        String
+  name        String       @unique
   description String
   base_price  Decimal      @db.Decimal(10, 2)
   ref_images  Json
@@ -50,6 +51,11 @@ model Service {
   updatedAt   DateTime     @updatedAt
 
   @@map("services")
+}
+
+enum UserRole {
+  CLIENT
+  ADMIN
 }
 
 enum SchedulingStatus {

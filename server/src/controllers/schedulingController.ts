@@ -6,24 +6,24 @@ export const add = async (req: Request, res: Response) => {
 
     try {
 
-        const { clientUuid, serviceUuid, date } = req.body;
+        const { userUuid, serviceUuid, date } = req.body;
 
-        if (!clientUuid || !serviceUuid || !date)
+        if (!userUuid || !serviceUuid || !date)
             return res.status(400).json({ error: "Dados incompletos." });
 
-        const clientExists = await prisma.client.findUnique({ where: { uuid: clientUuid } });
+        const userExists = await prisma.user.findUnique({ where: { uuid: userUuid } });
         const serviceExists = await prisma.service.findUnique({ where: { uuid: serviceUuid } });
 
-        if (!clientExists || !serviceExists)
-            return res.status(404).json({ error: "Cliente ou serviço não encontrado." });
+        if (!userExists || !serviceExists)
+            return res.status(404).json({ error: "Usuário ou serviço não encontrado." });
 
         const scheduling = await prisma.scheduling.create({
             data: {
-                client: { connect: { uuid: clientUuid } },
+                user: { connect: { uuid: userUuid } },
                 service: { connect: { uuid: serviceUuid } },
                 date,
             },
-            include: { client: true, service: true }
+            include: { user: true, service: true }
         });
 
         return res.status(201).json({ message: "Agendamento criado com sucesso.", scheduling });

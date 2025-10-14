@@ -4,7 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import prisma from "./prisma/client";
 
-import { clientRoutes, schedulingRoutes, serviceRoutes } from "./routes/index";
+import { userRoutes, schedulingRoutes, serviceRoutes } from "./routes/index";
 
 dotenv.config();
 
@@ -16,7 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 // Rotas principais
-app.use("/api/clients", clientRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/schedulings", schedulingRoutes);
 app.use("/api/services", serviceRoutes)
 
