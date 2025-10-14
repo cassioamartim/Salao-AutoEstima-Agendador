@@ -17,6 +17,13 @@ model User {
   password        String
   role            UserRole     @default(CLIENT)
   schedulings     Scheduling[]
+  ip_address      String?      @map("ip_address") @db.VarChar(45)
+  utm_campaign    String?      @map("utm_campaign") @db.VarChar(255)
+  utm_content     String?      @map("utm_content") @db.VarChar(255)
+  utm_medium      String?      @map("utm_medium") @db.VarChar(255)
+  utm_source      String?      @map("utm_source") @db.VarChar(255)
+  utm_term        String?      @map("utm_term") @db.VarChar(255)
+  tag             String?      @map("tag") @db.VarChar(255)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
