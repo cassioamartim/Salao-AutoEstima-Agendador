@@ -67,26 +67,31 @@ export const createScheduling = async (req: Request, res: Response): Promise<voi
     }
 }
 
-export const getSchedulings = async (_req: Request, res: Response): Promise<void> => {
+export const getSchedulings = async (req: Request, res: Response): Promise<void> => {
 
     try {
 
-        const schedulings = await getOrSetCache(
-            CacheKeys.schedulingsList,
-            async () =>
-                prisma.scheduling.findMany({
-                    select: {
-                        id: true,
-                        uuid: true,
-                        userUuid: true,
-                        serviceUuid: true,
-                        date: true,
-                        createdAt: true,
-                        updatedAt: true
-                    } as any,
-                }),
-            { tag: CacheTags.schedulings, ttlSeconds: 120 }
-        );
+        const isAdmin = req.user?.role === 'ADMIN'
+
+        const schedulings = await prisma.scheduling.findMany({
+            where: isAdmin ? {} : { userUuid: req.user?.uuid },
+            select: {
+                id: true,
+                uuid: true,
+                userUuid: true,
+                serviceUuid: true,
+                date: true,
+                status: true,
+                createdAt: true,
+                updatedAt: true,
+                user: {
+                    select: { uuid: true, name: true, email: true }
+                },
+                service: {
+                    select: { uuid: true, name: true, description: true, base_price: true }
+                }
+            } as any
+        });
 
         res.status(200).json({
             success: true,
@@ -141,8 +146,11 @@ export const getSchedulingById = async (req: Request, res: Response): Promise<vo
                 userUuid: true,
                 serviceUuid: true,
                 date: true,
+                status: true,
                 createdAt: true,
-                updatedAt: true
+                updatedAt: true,
+                user: { select: { uuid: true, name: true, email: true } },
+                service: { select: { uuid: true, name: true, description: true, base_price: true } }
             }
         });
 
@@ -228,6 +236,7 @@ export const updateScheduling = async (req: Request, res: Response): Promise<voi
                 userUuid: true,
                 serviceUuid: true,
                 date: true,
+                status: true,
                 createdAt: true,
                 updatedAt: true
             }
@@ -278,7 +287,8 @@ export const deleteScheduling = async (req: Request, res: Response): Promise<voi
         }
 
         const existingScheduling = await prisma.scheduling.findUnique({
-            where: { id: realId }
+            where: { id: realId },
+            select: { id: true, userUuid: true }
         });
 
         if (!existingScheduling) {
@@ -287,6 +297,14 @@ export const deleteScheduling = async (req: Request, res: Response): Promise<voi
                 message: 'Agendamento não encontrado'
             });
 
+            return;
+        }
+
+        const isAdmin = req.user?.role === 'ADMIN'
+
+        // Only owner or admin can delete
+        if (!isAdmin && existingScheduling.userUuid !== req.user?.uuid) {
+            res.status(403).json({ success: false, message: 'Sem permissão para cancelar este agendamento.' })
             return;
         }
 
